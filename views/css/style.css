@@ -1,0 +1,71 @@
+:root {
+    --primary:#116bb6;
+    --white:#fff;
+}
+
+body { 
+    margin: 0; 
+    padding: 0; 
+    line-height: 1.57em;
+}
+
+#map { 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    width: 100%; 
+}
+
+.mapboxgl-popup {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mapboxgl-popup-content {
+    padding: 0px;
+    border-radius: 8px;
+}
+
+.mapboxgl-popup-close-button {
+    font-size: 1.5em;
+    color: var(--white);
+    mix-blend-mode: color-dodge;
+}
+
+.popup-content {
+    width: 200px;
+}
+
+.description {
+    padding:1em 1.2em; 
+}
+
+.mapboxgl-marker {
+    cursor: pointer;
+}
+
+.img {
+    height: 30px;
+    width: 30px;
+}
+
+.img-user {
+    width:100%;
+    height: auto;
+}
+
+.alias {
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom:0.4em;
+}
+.text-header {
+    color:var(--primary)
+}
+
+.text-description {
+    font-size: 1em;
+    margin:0;
+    display: flex;
+    justify-content: space-between;
+}
