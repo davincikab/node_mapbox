@@ -233,7 +233,7 @@ function createMarker(person) {
 }
 
 function createGeojson(data) {
-    var geoObj = {
+    let geoObj = {
         "type": "FeatureCollection",
         "name": "persons",
         "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
@@ -256,3 +256,47 @@ function createGeojson(data) {
     console.log(geoObj);
     return geoObj;
 }
+
+// Create city or state Circle data
+function createStateData(data, type) {
+    let geoObj = {
+        "type": "FeatureCollection",
+        "name": "persons",
+        "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+        "features":[]
+    };
+
+    // aggregate the data
+    let localityData = data.map(person => person[type]);
+    let localityTypes = [...new Set(localityData)];
+
+    localityTypes.forEach(locality => {
+        let personLocality = data.filter(person = person[type] === locality);
+
+        let count = personLocality.length;
+        let points = [];
+
+        // create an array of turf.point
+        personLocality.forEach(person => {
+            let feature = turf.point([person.ALTITUDE, person.LONGITUDE]);
+
+            points.push(feature);
+        });
+
+        // create a convex hull
+        let fc = turf.featureCollection(points);
+        let convexHull = turf.convex(fc);
+
+        // get the centroid
+        let centroid = turf.centroid(convexHull);
+
+        // update the centroid properties return the centroid
+        centroid.properties.count = count;
+
+        // update the geoObj
+        geoObj.features.push(centroid);
+    });
+
+    return geoObj;
+}
+
