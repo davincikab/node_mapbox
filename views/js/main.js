@@ -3,6 +3,12 @@ var previousLastId;
 var allPersons;
 var updateInterval;
 var geoData;
+var statesData;
+var cityData;
+var dummyGeojson = {
+    "type": "FeatureCollection",
+    "features":[]
+};
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGF1ZGk5NyIsImEiOiJjanJtY3B1bjYwZ3F2NGFvOXZ1a29iMmp6In0.9ZdvuGInodgDk7cv-KlujA';
 var map = new mapboxgl.Map({
@@ -24,21 +30,65 @@ map.on("load", function(e) {
     // data source
     map.addSource('persons',{
         type:'geojson',
-        data:{
-            "type": "FeatureCollection",
-            "features":[]
-        },
-        cluster:true,
-        clusterRadius:80,
+        data:dummyGeojson,
+        // cluster:true,
+        // clusterRadius:80,
+    });
+
+    // map.addLayer({
+    //     id:'persons-cluster',
+    //     type:'circle',
+    //     source:'persons',
+    //     filter: ['has', 'point_count'],
+    //     paint:{
+    //         'circle-radius':20,
+    //         'circle-color':"blue",
+    //         "circle-opacity":0.8
+    //     },
+    //     layout:{
+
+    //     }
+    // });
+
+    // map.addLayer({
+    //     id: 'cluster-count',
+    //     type: 'symbol',
+    //     source: 'persons',
+    //     filter: ['has', 'point_count'],
+    //     layout: {
+    //         'text-field': '{point_count_abbreviated}',
+    //         'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+    //         'text-size': 12,
+    //     },
+    //     paint:{
+    //         'text-color':"white"
+    //     }
+    // });
+
+    map.addLayer({
+        id:'persons-layer',
+        type:'symbol',
+        source:'persons',
+        // filter: ['!', ['has', 'point_count']],
+        layout:{
+            'icon-image':'custom-marker',
+            'icon-size':0.4
+        }
+    });
+
+    // State Data
+    map.addSource("state-count", {
+        type:'geojson',
+        data:dummyGeojson
     });
 
     map.addLayer({
-        id:'persons-cluster',
-        type:'circle',
-        source:'persons',
-        filter: ['has', 'point_count'],
+        id:"states-layer",
+        type:"circle",
+        source:"states-count",
+        maxZoom:4,
         paint:{
-            'circle-radius':20,
+            'circle-radius':['get', 'count'],
             'circle-color':"blue",
             "circle-opacity":0.8
         },
@@ -48,12 +98,12 @@ map.on("load", function(e) {
     });
 
     map.addLayer({
-        id: 'cluster-count',
+        id: 'city-count-label',
         type: 'symbol',
-        source: 'persons',
-        filter: ['has', 'point_count'],
+        source: 'state-count',
+        maxZoom:4,
         layout: {
-            'text-field': '{point_count_abbreviated}',
+            'text-field': '{count_abbreviated}',
             'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
             'text-size': 12,
         },
@@ -62,16 +112,45 @@ map.on("load", function(e) {
         }
     });
 
+    // City data
+    map.addSource("city-count", {
+        type:'geojson',
+        data:dummyGeojson
+    });
+
     map.addLayer({
-        id:'persons-layer',
-        type:'symbol',
-        source:'persons',
-        filter: ['!', ['has', 'point_count']],
+        id:"city-layer",
+        type:"circle",
+        source:"city-count",
+        minZoom:4,
+        maxZoom:8,
+        paint:{
+            'circle-radius':['get', 'count'],
+            'circle-color':"blue",
+            "circle-opacity":0.8
+        },
         layout:{
-            'icon-image':'custom-marker',
-            'icon-size':0.4
+
         }
     });
+
+    map.addLayer({
+        id: 'city-count-label',
+        type: 'symbol',
+        source: 'city-count',
+        minZoom:4,
+        maxZoom:8,
+        layout: {
+            'text-field': '{count_abbreviated}',
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 12,
+        },
+        paint:{
+            'text-color':"white"
+        }
+    });
+
+    
 
     // load the data
     loadDataFromDb();
@@ -83,20 +162,20 @@ map.on("load", function(e) {
             layer:['persons-cluster']
         });
 
-        if(features[0]) {
-            var clusterId = features[0].properties.cluster_id;
-            map.getSource('persons').getClusterExpansionZoom(
-                clusterId,
-                function (err, zoom) {
-                    if (err) return;
+        // if(features[0]) {
+        //     var clusterId = features[0].properties.cluster_id;
+        //     map.getSource('persons').getClusterExpansionZoom(
+        //         clusterId,
+        //         function (err, zoom) {
+        //             if (err) return;
                     
-                    map.easeTo({
-                        center: features[0].geometry.coordinates,
-                        zoom: zoom
-                    });
-                }
-            );
-        }
+        //             map.easeTo({
+        //                 center: features[0].geometry.coordinates,
+        //                 zoom: zoom
+        //             });
+        //         }
+        //     );
+        // }
     });
 
     // click unclusterd cluster
@@ -131,6 +210,12 @@ function loadDataFromDb() {
         // create a geojson
         geoData = createGeojson(data);
         map.getSource('persons').setData(geoData);
+
+        statesData = createGenralizeData(data, "STATE");
+        map.getSource("state-count").setData(statesData);
+
+        cityData = createGenralizeData(data, "CITY");
+        map.getSource("state-count").setData(cityData);
         // createMarkers(data);
 
         updateInterval = setInterval(() => {
@@ -169,9 +254,16 @@ function updateData(data) {
 
         if(data[0]) {
             allPersons.push(...data);
-            geoData = createGeojson(allPersons);
 
+            geoData = createGeojson(allPersons);
             map.getSource("persons").setData(geoData);
+
+            statesData = createGenralizeData(allPersons, "STATE");
+            map.getSource("state-count").setData(statesData);
+
+            cityData = createGenralizeData(allPersons, "CITY");
+            map.getSource("state-count").setData(cityData);
+            
             // createMarkers(data);
         }
     })
@@ -258,7 +350,7 @@ function createGeojson(data) {
 }
 
 // Create city or state Circle data
-function createStateData(data, type) {
+function createGenralizeData(data, type) {
     let geoObj = {
         "type": "FeatureCollection",
         "name": "persons",
