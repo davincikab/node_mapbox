@@ -69,6 +69,8 @@ map.on("load", function(e) {
         id:'persons-layer',
         type:'symbol',
         source:'persons',
+        minzoom:8,
+        maxzoom:18,
         // filter: ['!', ['has', 'point_count']],
         layout:{
             'icon-image':'custom-marker',
@@ -77,7 +79,7 @@ map.on("load", function(e) {
     });
 
     // State Data
-    map.addSource("state-count", {
+    map.addSource("states-count", {
         type:'geojson',
         data:dummyGeojson
     });
@@ -86,7 +88,7 @@ map.on("load", function(e) {
         id:"states-layer",
         type:"circle",
         source:"states-count",
-        maxZoom:4,
+        maxzoom:4,
         paint:{
             'circle-radius':['get', 'count'],
             'circle-color':"blue",
@@ -98,10 +100,10 @@ map.on("load", function(e) {
     });
 
     map.addLayer({
-        id: 'city-count-label',
+        id: 'states-count-label',
         type: 'symbol',
-        source: 'state-count',
-        maxZoom:4,
+        source: 'states-count',
+        maxzoom:4,
         layout: {
             'text-field': '{count_abbreviated}',
             'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
@@ -122,8 +124,8 @@ map.on("load", function(e) {
         id:"city-layer",
         type:"circle",
         source:"city-count",
-        minZoom:4,
-        maxZoom:8,
+        minzoom:4,
+        maxzoom:8,
         paint:{
             'circle-radius':['get', 'count'],
             'circle-color':"blue",
@@ -138,8 +140,8 @@ map.on("load", function(e) {
         id: 'city-count-label',
         type: 'symbol',
         source: 'city-count',
-        minZoom:4,
-        maxZoom:8,
+        minzoom:4,
+        maxzoom:8,
         layout: {
             'text-field': '{count_abbreviated}',
             'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
@@ -155,6 +157,31 @@ map.on("load", function(e) {
     // load the data
     loadDataFromDb();
 
+    // Click the 
+    map.on("click", "states-layer", function(e) {
+        let features = map.queryRenderedFeatures(e.point, {
+            layers:['states-layer']
+        });
+
+        if(features[0]) {
+            let feature = features[0];
+
+            createPopup(feature, 'STATE');
+        }
+    });
+
+    map.on("click", "city-layer", function(e) {
+        let features = map.queryRenderedFeatures(e.point, {
+            layers:['city-layer']
+        });
+
+        if(features[0]) {
+            let feature = features[0];
+
+            createPopup(feature, 'CITY');
+        }
+    });
+
     // click clustered point
     map.on("click", "persons-cluster",function(e) {
         // query the data
@@ -164,7 +191,7 @@ map.on("load", function(e) {
 
         // if(features[0]) {
         //     var clusterId = features[0].properties.cluster_id;
-        //     map.getSource('persons').getClusterExpansionZoom(
+        //     map.getSource('persons').getClusterExpansionzoom(
         //         clusterId,
         //         function (err, zoom) {
         //             if (err) return;
@@ -189,7 +216,7 @@ map.on("load", function(e) {
         }
     });
 
-    ['persons-cluster', "persons-layer"].forEach(layer => {
+    ['persons-cluster', "persons-layer", "city-layer", "states-layer"].forEach(layer => {
         map.on('mouseenter', layer, function () {
             map.getCanvas().style.cursor = 'pointer';
         });
@@ -212,10 +239,10 @@ function loadDataFromDb() {
         map.getSource('persons').setData(geoData);
 
         statesData = createGenralizeData(data, "STATE");
-        map.getSource("state-count").setData(statesData);
+        map.getSource("states-count").setData(statesData);
 
         cityData = createGenralizeData(data, "CITY");
-        map.getSource("state-count").setData(cityData);
+        map.getSource("city-count").setData(cityData);
         // createMarkers(data);
 
         updateInterval = setInterval(() => {
@@ -259,10 +286,10 @@ function updateData(data) {
             map.getSource("persons").setData(geoData);
 
             statesData = createGenralizeData(allPersons, "STATE");
-            map.getSource("state-count").setData(statesData);
+            map.getSource("states-count").setData(statesData);
 
             cityData = createGenralizeData(allPersons, "CITY");
-            map.getSource("state-count").setData(cityData);
+            map.getSource("city-count").setData(cityData);
             
             // createMarkers(data);
         }
@@ -282,6 +309,27 @@ function createMarkers(persons) {
     persons.forEach(function(person) {
         createMarker(person);
     });
+
+}
+
+// Create popup 
+function createPopup(feature, type) {
+    var popupContent = "<div class='popup-content'>"+
+    "<div class='description'>"+
+    "<p class='text-description alias'>"+ feature.properties[type] +"</p>"+
+    "<p class='text-description'><span class='text-header'>People</span>"+ feature.properties.count +"</p>"+
+    "</div>"+
+    "</div>";
+
+    // create a popup
+    new mapboxgl.Popup({
+        closeOnClick:true, 
+        closeOnMove:true,
+        offset:{bottom:[0, -10]}
+    })
+    .setLngLat(feature.geometry.coordinates)
+    .setHTML(popupContent)
+    .addTo(map);
 
 }
 
@@ -363,7 +411,7 @@ function createGenralizeData(data, type) {
     let localityTypes = [...new Set(localityData)];
 
     localityTypes.forEach(locality => {
-        let personLocality = data.filter(person = person[type] === locality);
+        let personLocality = data.filter(person => person[type] === locality);
 
         let count = personLocality.length;
         let points = [];
@@ -384,6 +432,7 @@ function createGenralizeData(data, type) {
 
         // update the centroid properties return the centroid
         centroid.properties.count = count;
+        centroid.properties[type] = locality;
 
         // update the geoObj
         geoObj.features.push(centroid);
@@ -392,3 +441,7 @@ function createGenralizeData(data, type) {
     return geoObj;
 }
 
+
+// Update the circle radius (Interpolate )
+// Click and popups
+// deliver
