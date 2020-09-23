@@ -463,12 +463,18 @@ function createGenralizeData(data, type) {
             points.push(feature);
         });
 
-        // create a convex hull
-        let fc = turf.featureCollection(points);
-        let convexHull = turf.convex(fc);
+        let centroid;
+        if(points.length == 1) {
+            centroid = points[0];
+            console.log(centroid);
+        } else {
+            // create a convex hull
+            let fc = turf.featureCollection(points);
+            let convexHull = turf.convex(fc);
 
-        // get the centroid
-        let centroid = turf.centroid(convexHull);
+            // get the centroid
+            centroid = turf.centroid(convexHull);
+        }
 
         // update the centroid properties return the centroid
         centroid.properties.count = count;
@@ -480,8 +486,3 @@ function createGenralizeData(data, type) {
 
     return geoObj;
 }
-
-
-// Update the circle radius (Interpolate )
-// Click and popups
-// deliver

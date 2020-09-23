@@ -3,8 +3,13 @@ const path = require("path");
 const borderParser = require("body-parser");
 const router = require("./routes/appRoutes.js");
 
+const dotenv = require("dotenv");
+dotenv.config();
+
 const app = express();
-const port = 5000;
+const port = process.env.PORT;
+
+console.log("Port: " + process.env.PORT);
 
 
 app.get("/", (req, res) => {

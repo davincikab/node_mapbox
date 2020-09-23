@@ -1,13 +1,20 @@
 var mysql = require('mysql');
+const dotenv = require("dotenv");
+
+dotenv.config();
+console.log('Database: '+process.env.DATABASE );
 
 var connection = mysql.createConnection({
-  host: 'localhost',
-  user:'root',
-  password: 'root',
-  database:'density' 
+  host: process.env.HOST,
+  user:process.env.USER,
+  password: process.env.PASSWORD,
+  database:process.env.DATABASE 
 });
 
 connection.connect();
+
+// rcsoft.luis@gmail.com
+// p3@X4MEXAK_kJb
 
 // connection.end()
 module.exports = connection;
