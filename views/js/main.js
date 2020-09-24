@@ -272,6 +272,13 @@ function loadDataFromDb() {
     fetch('persons')
     .then(res => res.json())
     .then(data => {
+        
+        if(data[0] && data[0].ALIAS) {
+            data = data;
+        } else {
+            data = [];
+        }
+        
         allPersons = data;
 
         // create a geojson
@@ -318,7 +325,8 @@ function updateData(data) {
     .then(res => res.json())
     .then(data => {
         // console.log("new data");
-
+        
+        console.log(data);
         if(data[0]) {
             allPersons.push(...data);
 
