@@ -277,6 +277,7 @@ function loadDataFromDb() {
             data = data;
         } else {
             data = [];
+            throw new Error(data);
         }
         
         allPersons = data;
@@ -340,6 +341,8 @@ function updateData(data) {
             map.getSource("city-count").setData(cityData);
             
             // createMarkers(data);
+        } else {
+            throw new Error(data);
         }
     })
     .catch(error => {
