@@ -1,4 +1,4 @@
-const sql = require("../db.js");
+const pool = require("../db.js");
 
 var Person = function(person) {
 	this.ALIAS = person.alias;
@@ -19,31 +19,40 @@ var Person = function(person) {
 }
 
 Person.getAllPersons = function(result) {
-    sql.query("SELECT ID_CAN, ALIAS, COUNTRY, STATE, CITY, LONGITUDE, ALTITUDE, DOB, PROFESSION, PIC_PROFILE from location_data WHERE AUTHORIZED = ?", ['Y'], function (err, res) {
+    pool.getConnection(function(error, sql) {
+        if(error) throw error;
 
-        if(err) {
-            console.log("error: ", err);
-            result(null, err);
-        }
-        else{
+        sql.query("SELECT ID_CAN, ALIAS, COUNTRY, STATE, CITY, LONGITUDE, ALTITUDE, DOB, PROFESSION, PIC_PROFILE from location_data WHERE AUTHORIZED = ?", ['Y'], function (err, res, fields) {
 
-            result(null, res);
-        }
+            if(err) {
+                console.log("error: ", err);
+                result(null, err);
+            }
+            else{
+    
+                result(null, res);
+            }
+        });
+
     });   
 }
 
 Person.getNewPersons = function(lastId, result) {
-	sql.query("SELECT ID_CAN, ALIAS, COUNTRY, STATE, CITY, LONGITUDE, ALTITUDE, DOB, PROFESSION, PIC_PROFILE from location_data WHERE ID_CAN > ? AND AUTHORIZED = ?", [lastId, 'Y'] , function (err, res) {
+    pool.getConnection(function(error, sql) {
+        if(error) throw error;
 
-        if(err) {
-            console.log("error: ", err);
-            result(null, err);
-        }
-        else{
+        sql.query("SELECT ID_CAN, ALIAS, COUNTRY, STATE, CITY, LONGITUDE, ALTITUDE, DOB, PROFESSION, PIC_PROFILE from location_data WHERE ID_CAN > ? AND AUTHORIZED = ?", [lastId, 'Y'] , function (err, res) {
 
-            result(null, res);
-        }
-    });  
+            if(err) {
+                console.log("error: ", err);
+                result(null, err);
+            }
+            else{
+                sql.release();
+                result(null, res);
+            }
+        });  
+    });
 }
 
 module.exports = Person;

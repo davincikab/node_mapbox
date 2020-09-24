@@ -4,19 +4,23 @@ const dotenv = require("dotenv");
 dotenv.config();
 console.log('Database: '+process.env.DATABASE );
 
-var connection = mysql.createConnection({
+// var connection = mysql.createConnection({
+//   host: process.env.HOST,
+//   user:process.env.USER,
+//   password: process.env.PASSWORD,
+//   database:process.env.DATABASE 
+// });
+
+var connection = mysql.createPool({
+  connectionLimit:100,
   host: process.env.HOST,
   user:process.env.USER,
   password: process.env.PASSWORD,
   database:process.env.DATABASE 
 });
 
-connection.connect();
+// connection.connect();
 
-// rcsoft.luis@gmail.com
-// p3@X4MEXAK_kJb
-
-// connection.end()
 module.exports = connection;
 
 
