@@ -22,17 +22,16 @@ Person.getAllPersons = function(result) {
     pool.getConnection(function(error, sql) {
         if(error) throw error;
 
-        sql.query("SELECT ID_CAN, ALIAS, COUNTRY, STATE, CITY, LONGITUDE, ALTITUDE, DOB, PROFESSION, PIC_PROFILE from location_data WHERE AUTHORIZED = ?", ['Y'], function (err, res, fields) {
+    sql.query("SELECT ID_CAN, ALIAS, COUNTRY, STATE, CITY, LONGITUDE, ALTITUDE, DOB, PROFESSION, PIC_PROFILE from location_data WHERE AUTHORIZED = ?", ['Y'], function (err, res, fields) {
 
-            if(err) {
-                console.log("error: ", err);
-                result(null, err);
-            }
+        if(err) {
+            console.log("error: ", err);
+            result(null, err);
+        }
             else{
-    
                 result(null, res);
-            }
-        });
+        }
+    });
 
     });   
 }

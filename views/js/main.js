@@ -276,8 +276,9 @@ function loadDataFromDb() {
         if(data[0] && data[0].ALIAS) {
             data = data;
         } else {
+            console.log(data);
+            throw new Error('Failed to fetch the data');
             data = [];
-            throw new Error(data);
         }
         
         allPersons = data;
@@ -328,7 +329,7 @@ function updateData(data) {
         // console.log("new data");
         
         console.log(data);
-        if(data[0]) {
+        if(data[0] || data.length == 0) {
             allPersons.push(...data);
 
             geoData = createGeojson(allPersons);
@@ -342,7 +343,8 @@ function updateData(data) {
             
             // createMarkers(data);
         } else {
-            throw new Error(data);
+            console.log(data);
+            throw new Error('Failed to fetch the data');
         }
     })
     .catch(error => {
@@ -478,13 +480,24 @@ function createGenralizeData(data, type) {
         if(points.length == 1) {
             centroid = points[0];
             console.log(centroid);
-        } else {
+        } else if(points.length == 2) {
+            // get the coords mean 
+            centroid = turf.midpoint(points[0], points[1]);
+        }
+        else {
             // create a convex hull
             let fc = turf.featureCollection(points);
             let convexHull = turf.convex(fc);
 
-            // get the centroid
-            centroid = turf.centroid(convexHull);
+            if(convexHull) {
+                // get the centroid
+                centroid = turf.centroid(convexHull);
+            } else {
+                
+                centroid = turf.midpoint(points[0], points[points.length - 1]);
+            }
+
+            
         }
 
         // update the centroid properties return the centroid
