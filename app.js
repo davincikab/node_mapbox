@@ -12,16 +12,16 @@ const port = process.env.PORT;
 console.log("Port: " + process.env.PORT);
 
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd() ,'/views/index.html'))
-});
+// app.get("/mapa", (req, res) => {
+//     res.sendFile(path.join(process.cwd() ,'./views/index.html'))
+// });
 
 // use body
 app.use(borderParser.urlencoded({extended:true}));
 app.use(borderParser.json());
 
 // static files 
-app.use('/static/', express.static(path.join(__dirname, '/views')));
+app.use('/mapa/', express.static(path.join(__dirname, './views')));
 
 // add the paths to the 
 app.use("/persons", router);

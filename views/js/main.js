@@ -21,7 +21,7 @@ var map = new mapboxgl.Map({
 // add the data
 map.on("load", function(e) {
     // load marker images
-    map.loadImage("/static/images/user.png", function(error, image) {
+    map.loadImage("/mapa/images/user.png", function(error, image) {
         if(!map.hasImage("custom-marker")) {
             map.addImage("custom-marker", image);
         }
@@ -69,7 +69,7 @@ map.on("load", function(e) {
         id:'persons-layer',
         type:'symbol',
         source:'persons',
-        minzoom:8,
+        minzoom:7,
         maxzoom:18,
         // filter: ['!', ['has', 'point_count']],
         layout:{
@@ -96,20 +96,8 @@ map.on("load", function(e) {
                 ['get', 'count'],
                 0,
                 10,
-                10,
-                12.5,
-                20,
-                15,
-                30,
-                17.5,
-                40,
-                20,
-                50,
-                22.5,
-                60, 
-                25,
-                70,
-                27.5
+                100000,
+                100
             ],
             'circle-color':"blue",
             "circle-opacity":0.8
@@ -125,9 +113,13 @@ map.on("load", function(e) {
         source: 'states-count',
         maxzoom:4,
         layout: {
-            'text-field': ['get', 'count'],
+            'text-field': [
+                "case",
+                [">=", ['get', "count"], 1000],  ["concat", ["/", ['get', "count"], 1000], "k"],
+                ["concat",['get', "count"], ""]
+            ],
             'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
+            'text-size': 10,
         },
         paint:{
             'text-color':"white"
@@ -145,7 +137,7 @@ map.on("load", function(e) {
         type:"circle",
         source:"city-count",
         minzoom:4,
-        maxzoom:8,
+        maxzoom:7,
         paint:{
             'circle-radius':[
                 'interpolate',
@@ -153,20 +145,8 @@ map.on("load", function(e) {
                 ['get', 'count'],
                 0,
                 10,
-                10,
-                12.5,
-                20,
-                15,
-                30,
-                17.5,
-                40,
-                20,
-                50,
-                22.5,
-                60, 
-                25,
-                70,
-                27.5
+                100000,
+                100
             ],
             'circle-color':"blue",
             "circle-opacity":0.8
@@ -181,11 +161,15 @@ map.on("load", function(e) {
         type: 'symbol',
         source: 'city-count',
         minzoom:4,
-        maxzoom:8,
+        maxzoom:7,
         layout: {
-            'text-field': ['get', 'count'],
+            'text-field': [
+                "case",
+                [">=", ['get', "count"], 1000],  ["concat", ["/", ['get', "count"], 1000], "k"],
+                ["concat",['get', "count"], ""]
+            ],
             'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 12,
+            'text-size': 10,
         },
         paint:{
             'text-color':"white"
@@ -269,7 +253,7 @@ map.on("load", function(e) {
 });
 
 function loadDataFromDb() {
-    fetch('persons')
+    fetch('/persons')
     .then(res => res.json())
     .then(data => {
         
@@ -328,8 +312,8 @@ function updateData(data) {
     .then(data => {
         // console.log("new data");
         
-        console.log(data);
-        if(data[0] || data.length == 0) {
+        // console.log(data);
+        if(data[0] || data.length > 0) {
             allPersons.push(...data);
 
             geoData = createGeojson(allPersons);
@@ -342,7 +326,10 @@ function updateData(data) {
             map.getSource("city-count").setData(cityData);
             
             // createMarkers(data);
-        } else {
+        } else if(data.length == 0) {
+            return;
+        }   
+        else {
             console.log(data);
             throw new Error('Failed to fetch the data');
         }
@@ -357,7 +344,7 @@ function updateData(data) {
 }
 
 function createMarkers(persons) {
-    console.log(persons);
+    // console.log(persons);
 
     persons.forEach(function(person) {
         createMarker(person);
@@ -370,7 +357,7 @@ function createPopup(feature, type) {
     var popupContent = "<div class='popup-content'>"+
     "<div class='description'>"+
     "<p class='text-description alias'>"+ feature.properties[type] +"</p>"+
-    "<p class='text-description'><span class='text-header'>People</span>"+ feature.properties.count +"</p>"+
+    "<p class='text-description'><span class='text-header'>Cananenses</span>"+ feature.properties.count +"</p>"+
     "</div>"+
     "</div>";
 
@@ -387,16 +374,16 @@ function createPopup(feature, type) {
 }
 
 function createMarker(person) {
-    person.PIC_PROFILE = person.PIC_PROFILE ? person.PIC_PROFILE : "/static/images/man.jpg";
+    person.PIC_PROFILE = person.PIC_PROFILE ? person.PIC_PROFILE : "/mapa/images/man.jpg";
 
     var popupContent = "<div class='popup-content'>"+
         "<img src='"+person.PIC_PROFILE+"' class='img-user' alt='"+person.ALIAS+"'>"+
         "<div class='description'>"+
         "<p class='text-description alias'>"+ person.ALIAS +"</p>"+
-        "<p class='text-description'><span class='text-header'>Profession</span>"+ person.PROFESSION +"</p>"+
-        "<p class='text-description'><span class='text-header'>City</span>"+ person.CITY +"</p>"+
-        "<p class='text-description'><span class='text-header'>State</span>"+ person.STATE +"</p>"+
-        "<p class='text-description'><span class='text-header'>Country</span>"+ person.COUNTRY +"</p>"+
+        "<p class='text-description'><span class='text-header'>Profesión</span>"+ person.PROFESSION +"</p>"+
+        "<p class='text-description'><span class='text-header'>Ciudad</span>"+ person.CITY +"</p>"+
+        "<p class='text-description'><span class='text-header'>Estado</span>"+ person.STATE +"</p>"+
+        "<p class='text-description'><span class='text-header'>País</span>"+ person.COUNTRY +"</p>"+
         "</div>"+
         "</div>";
     
@@ -446,7 +433,7 @@ function createGeojson(data) {
         geoObj.features.push(feature);
     });
 
-    console.log(geoObj);
+    // console.log(geoObj);
     return geoObj;
 }
 
@@ -479,7 +466,7 @@ function createGenralizeData(data, type) {
         let centroid;
         if(points.length == 1) {
             centroid = points[0];
-            console.log(centroid);
+            // console.log(centroid);
         } else if(points.length == 2) {
             // get the coords mean 
             centroid = turf.midpoint(points[0], points[1]);
@@ -501,7 +488,7 @@ function createGenralizeData(data, type) {
         }
 
         // update the centroid properties return the centroid
-        centroid.properties.count = count;
+        centroid.properties.count = count * 200;
         centroid.properties[type] = locality;
 
         // update the geoObj
